@@ -1,0 +1,51 @@
+from Raspi_MotorHAT import Raspi_MotorHAT, Raspi_DCMotor
+
+import time
+import atexit
+import RPi.GPIO as GPIO
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(21, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+mh = Raspi_MotorHAT(addr=0x6f)
+count = 0
+
+def turnOffMotors():
+    mh.getMotor(1).run(Raspi_MotorHAT.RELEASE)
+    mh.getMotor(2).run(Raspi_MotorHAT.RELEASE)
+    mh.getMotor(3).run(Raspi_MotorHAT.RELEASE)
+    mh.getMotor(4).run(Raspi_MotorHAT.RELEASE)
+
+def windingCount(channel):
+    global count
+    if GPIO.input(21):
+        count = count + 1
+        print(count)
+
+atexit.register(turnOffMotors)
+
+myMotor = mh.getMotor(3)
+sideMotor = mh.getMotor(2)
+
+
+GPIO.add_event_detect(21, GPIO.BOTH, callback=windingCount)
+
+# set the speed to start, from 0 (off) to 255 (max speed)
+myMotor.setSpeed(255)
+myMotor.run(Raspi_MotorHAT.FORWARD);
+# turn on motor
+myMotor.run(Raspi_MotorHAT.RELEASE);
+
+sideMotor.setSpeed(200)
+sideMotor.run(Raspi_MotorHAT.FORWARD);
+sideMotor.run(Raspi_MotorHAT.RELEASE);
+
+while count < 5:
+
+    myMotor.run(Raspi_MotorHAT.FORWARD)
+    sideMotor.run(Raspi_MotorHAT.FORWARD)
+
+turnOffMotors()
+
+GPIO.cleanup()
+
